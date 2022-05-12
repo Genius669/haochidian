@@ -17,6 +17,8 @@ import com.zhao.haochidian.service.SetmealDishService;
 import com.zhao.haochidian.service.SetmealService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,9 +53,12 @@ public class SetmealController {
      * @return
      */
     @PostMapping
+    @CacheEvict(value="SetmealCatch",key="#setmealDto.categoryId")
     public R<String> saveWithDish(@RequestBody SetmealDto setmealDto) {
+/*
         String key = "Setmeal_" + setmealDto.getCategoryId();
         redisTemplate.delete(key);
+*/
         setmealService.saveWithDish(setmealDto);
         return R.success("套餐添加成功");
     }
@@ -99,13 +104,14 @@ public class SetmealController {
      * @return
      */
     @DeleteMapping
+    //@CacheEvict(value="SetmealCatch",allEntries=true)
     public R<String> delete(@RequestParam List<Long> ids) {
 
         for (Long id : ids) {
             Setmeal one = setmealService.getById(id);
-            String key = "Setmeal_" + one.getCategoryId();
+            String key = "SetmealCatch::" + one.getCategoryId();
             redisTemplate.delete(key);
-            key = "SetmealDish_" + id;
+            key = "SetmealDishCatch::" + id;
             redisTemplate.delete(key);
         }
 
@@ -114,31 +120,38 @@ public class SetmealController {
     }
 
     @GetMapping("/list")
+    @Cacheable(value = "SetmealCatch",key = "#setmeal.categoryId")
     public R<List<Setmeal>> list(Setmeal setmeal) {
         List<Setmeal> list = null;
+/*
         //将套餐的分类ID作为缓存标识
         String key = "Setmeal_" + setmeal.getCategoryId();
         //如果缓存存在直接返回数据
         list = (List<Setmeal>) redisTemplate.opsForValue().get(key);
         if (list != null) return R.success(list);
-
+*/
         LambdaQueryWrapper<Setmeal> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId());
         wrapper.eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus());
         wrapper.orderByDesc(Setmeal::getUpdateTime);
         list = setmealService.list(wrapper);
+/*
         redisTemplate.opsForValue().set(key, list, 60, TimeUnit.MINUTES);
+*/
         return R.success(list);
     }
 
     @GetMapping("/dish/{id}")
+    @Cacheable(value = "SetmealDishCatch",key = "#id")
     public R<List<SetmealDishDto>> dishList(@PathVariable Long id) {
         List<SetmealDishDto> list = null;
+/*
         //将套餐的分类ID作为缓存标识
         String key = "SetmealDish_" + id;
         //如果缓存存在直接返回数据
         list = (List<SetmealDishDto>) redisTemplate.opsForValue().get(key);
         if (list != null) return R.success(list);
+*/
 
         LambdaQueryWrapper<SetmealDish> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SetmealDish::getSetmealId, id);
@@ -151,10 +164,12 @@ public class SetmealController {
             dishWrapper.eq(Dish::getId, item.getDishId());
             Dish one = dishService.getOne(dishWrapper);
             dto.setImage(one.getImage());
-//            dto.setDish(one);
+            //dto.setDish(one);
             return dto;
         }).collect(Collectors.toList());
+/*
         redisTemplate.opsForValue().set(key, list, 60, TimeUnit.MINUTES);
+*/
         return R.success(list);
     }
 
