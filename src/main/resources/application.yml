@@ -26,6 +26,8 @@ spring:
       props:
         sql:
           show: true
+    sharding:
+      default-data-source-name: master
   main:
     allow-bean-definition-overriding: true
   redis:
