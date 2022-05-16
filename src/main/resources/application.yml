@@ -48,4 +48,4 @@ mybatis-plus:
 haochidian:
   pic:
 #    path: C:/Users/23763/Desktop/jpg/
-    path: /home/genius669/Desktop/jpg/
+    path: /var/local/jpg/
