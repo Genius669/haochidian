@@ -24,10 +24,10 @@ public class ShoppingCartController {
         Long id = BaseContext.getCurrentID();
         shoppingCart.setUserId(id);
         //查询当前菜品/套餐是否在购物车中
-        Long dishId = shoppingCart.getDishId();
         LambdaQueryWrapper<ShoppingCart> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ShoppingCart::getUserId, id);
 
+        Long dishId = shoppingCart.getDishId();
         if (dishId != null) {
             wrapper.eq(ShoppingCart::getDishId, dishId);
         } else {
@@ -47,6 +47,33 @@ public class ShoppingCartController {
         return R.success(one);
     }
 
+    @PostMapping("/sub")
+    public R<ShoppingCart> sub(@RequestBody ShoppingCart shoppingCart) {
+        //设置用户id，指定哪个用户的购物车
+        Long id = BaseContext.getCurrentID();
+        shoppingCart.setUserId(id);
+        //查询当前菜品/套餐是否在购物车中
+        LambdaQueryWrapper<ShoppingCart> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ShoppingCart::getUserId, id);
+
+        Long dishId = shoppingCart.getDishId();
+        if (dishId != null) {
+            wrapper.eq(ShoppingCart::getDishId, dishId);
+        } else {
+            wrapper.eq(ShoppingCart::getSetmealId, shoppingCart.getSetmealId());
+        }
+        ShoppingCart one = shoppingCartService.getOne(wrapper);
+
+        if (one != null) {        //如果已经存在，就在用来的数量上-1
+            if(one.getNumber()>1){
+                one.setNumber(one.getNumber() - 1);
+                shoppingCartService.updateById(one);
+            }else {
+                shoppingCartService.removeById(one.getId());
+            }
+        }
+        return R.success(one);
+    }
 
     @GetMapping("/list")
     public R<List<ShoppingCart>> list() {
