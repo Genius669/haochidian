@@ -22,6 +22,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -117,6 +118,24 @@ public class SetmealController {
 
         setmealService.removeWithDish(ids);
         return R.success("删除套餐成功");
+    }
+    @PostMapping("/status/{status}")
+    public R<List<Setmeal>> status(@PathVariable int status,@RequestParam List<Long> ids){
+        for (Long id : ids) {
+            Setmeal one = setmealService.getById(id);
+            String key = "SetmealCatch::" + one.getCategoryId();
+            redisTemplate.delete(key);
+            key = "SetmealDishCatch::" + id;
+            redisTemplate.delete(key);
+        }
+        setmealService.changeStatus(status,ids);
+        List<Setmeal> list = new ArrayList<>();
+
+        for (Long id : ids){
+            Setmeal meal = setmealService.getById(id);
+            list.add(meal);
+        }
+        return R.success(list);
     }
 
     @GetMapping("/list")

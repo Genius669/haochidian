@@ -45,17 +45,17 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal>
     @Override
     @Transactional
     public void removeWithDish(List<Long> ids) {
-//        LambdaQueryWrapper<Setmeal> setmealWrapper = new LambdaQueryWrapper<>();
-//        setmealWrapper.in(Setmeal::getId, ids);
-//        setmealWrapper.eq(Setmeal::getStatus, 1);
-//        int count = this.count(setmealWrapper);
-//        if (count > 0) throw new CustomException("套餐正在售卖中，不能删除");
+        LambdaQueryWrapper<Setmeal> setmealWrapper = new LambdaQueryWrapper<>();
+        setmealWrapper.in(Setmeal::getId, ids);
+        setmealWrapper.eq(Setmeal::getStatus, 1);
+        int count = this.count(setmealWrapper);
+        if (count > 0) throw new CustomException("套餐正在售卖中，不能删除");
 
 
         //删除setmeal表中数据
         LambdaUpdateWrapper<Setmeal> setmealUpdate = new LambdaUpdateWrapper<>();
         setmealUpdate.in(Setmeal::getId, ids);
-        setmealUpdate.set(Setmeal::getStatus, 0);
+//        setmealUpdate.set(Setmeal::getStatus, 0);
         setmealUpdate.set(Setmeal::getIsDeleted, 1);
         this.update(setmealUpdate);
 
@@ -67,6 +67,14 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal>
         setmealDishService.update(dishUpdate);
 
 
+    }
+
+    @Override
+    public void changeStatus(int status,List<Long> ids) {
+        LambdaUpdateWrapper<Setmeal> setmealUpdate = new LambdaUpdateWrapper<>();
+        setmealUpdate.in(Setmeal::getId, ids);
+        setmealUpdate.set(Setmeal::getStatus, status==1?1:0);
+        this.update(setmealUpdate);
     }
 }
 
