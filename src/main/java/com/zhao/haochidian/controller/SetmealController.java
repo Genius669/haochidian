@@ -120,7 +120,7 @@ public class SetmealController {
         return R.success("删除套餐成功");
     }
     @PostMapping("/status/{status}")
-    public R<List<Setmeal>> status(@PathVariable int status,@RequestParam List<Long> ids){
+    public R<String> status(@PathVariable int status,@RequestParam List<Long> ids){
         for (Long id : ids) {
             Setmeal one = setmealService.getById(id);
             String key = "SetmealCatch::" + one.getCategoryId();
@@ -129,13 +129,7 @@ public class SetmealController {
             redisTemplate.delete(key);
         }
         setmealService.changeStatus(status,ids);
-        List<Setmeal> list = new ArrayList<>();
-
-        for (Long id : ids){
-            Setmeal meal = setmealService.getById(id);
-            list.add(meal);
-        }
-        return R.success(list);
+        return R.success("修改成功");
     }
 
     @GetMapping("/list")
