@@ -1,6 +1,7 @@
 package com.zhao.haochidian.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhao.haochidian.common.R;
 import com.zhao.haochidian.dto.DishDto;
@@ -153,4 +154,40 @@ public class DishController {
     }
 
 
+    /**
+     * 起售、停售，批量起售、批量停售
+     * @param status 0/1
+     * @param ids 要修改的菜品的id集合
+     * @return 修改成功
+     */
+    @PostMapping("/status/{status}")
+    public R<String> status(@PathVariable int status, @RequestParam List<Long> ids) {
+        for (Long id : ids) {
+            Dish one = dishService.getById(id);
+            String key = "dish_" + one.getCategoryId();
+            redisTemplate.delete(key);
+        }
+        LambdaUpdateWrapper<Dish> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.in(Dish::getId, ids);
+        wrapper.set(Dish::getStatus, status == 1 ? 1 : 0);
+        dishService.update(wrapper);
+        return R.success("菜品更新成功");
+    }
+
+
+    /**
+     * 删除菜品
+     * @param ids 要删除的菜品id
+     * @return 删除成功
+     */
+    @DeleteMapping
+    public R<String> delete(@RequestParam List<Long> ids) {
+        for (Long id : ids) {
+            Dish one = dishService.getById(id);
+            String key = "dish_" + one.getCategoryId();
+            redisTemplate.delete(key);
+        }
+        dishService.deleteWithFlavor(ids);
+        return R.success("菜品删除成功");
+    }
 }

@@ -1,7 +1,9 @@
 package com.zhao.haochidian.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zhao.haochidian.common.CustomException;
 import com.zhao.haochidian.dto.DishDto;
 import com.zhao.haochidian.entity.Dish;
 import com.zhao.haochidian.entity.DishFlavor;
@@ -70,6 +72,26 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish>
             return f;
         }).collect(Collectors.toList());
         dishFlavorService.saveBatch(flavors);
+    }
+
+    @Override
+    @Transactional
+    public void deleteWithFlavor(List<Long> ids) {
+        //dish在售则不可删除
+        LambdaQueryWrapper<Dish> selectDish = new LambdaQueryWrapper<>();
+        selectDish.in(Dish::getId,ids);
+        selectDish.eq(Dish::getStatus,1);
+        if (this.count(selectDish)>0) throw new CustomException("菜品正在售卖，不能删除");
+        //更新Dish中删除字段
+        LambdaUpdateWrapper<Dish> updateDish = new LambdaUpdateWrapper<>();
+        updateDish.in(Dish::getId,ids);
+        updateDish.set(Dish::getIsDeleted,1);
+        this.update(updateDish);
+        //更新DishFlavor中删除字段
+        LambdaUpdateWrapper<DishFlavor> updateDishFlavor = new LambdaUpdateWrapper<>();
+        updateDishFlavor.in(DishFlavor::getDishId,ids);
+        updateDishFlavor.set(DishFlavor::getIsDeleted,1);
+        dishFlavorService.update(updateDishFlavor);
     }
 }
 
